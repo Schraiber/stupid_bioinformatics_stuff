@@ -38,7 +38,7 @@ exons = parse_bed_file(args.bed_file)
 
 outfile = open(args.output_tsv,"w")
 
-outfile.write("chrom\tpos\tref\tref_trinuc\tgene_name\tstrand\tcoding_pos\tcoding_nuc\tcodon_pos\tcodon\tAA_pos\tAA\n")
+outfile.write("chrom\tpos\tref\talt\tref_trinuc\talt_trinuc\tgene_name\tstrand\tcoding_pos\tcoding_nuc\tcodon_pos\tcodon\talt_codon\tAA_pos\tAA\talt_AA\n")
 
 print("Generating output")
 
@@ -84,20 +84,19 @@ for enst in exons:
             codon = transcript_seq[codon_start:codon_end]
             AA_pos = math.floor(num_codon)-math.floor(i/3)
 
-        try:
-            AA = codon.translate()
-        except BiopythonWarning:
-            print(enst)
-            print(strand)
-            print(len(transcript_seq))
-            print(i)
-            print(codon_pos)
-            print(codon)
-            input()
-            AA = None
+        AA = codon.translate()
             
         trinuc = before_seq[i] + cur_nuc + after_seq[i]
-        outfile.write(f'{chrom}\t{cur_pos}\t{cur_nuc}\t{trinuc}\t{enst}\t{strand}\t{i}\t{coding_nuc}\t{codon_pos}\t{codon}\t{AA_pos}\t{AA}\n')
-        #if (AA == "*") and ((codon_pos == 2 and strand=="+") or (codon_pos == 0 and strand=="-")) : break 
+
+        for alt_nuc in {"A","C","G","T"} - {cur_nuc}:
+            if strand == "-":
+                alt_coding_nuc = Seq(alt_nuc).reverse_complement() 
+            else:
+                alt_coding_nuc = alt_nuc
+            alt_codon = codon[:codon_pos] + Seq(alt_coding_nuc) + codon[(codon_pos+1):4]
+            alt_AA = alt_codon.translate()
+            alt_trinuc = before_seq[i] + alt_nuc + after_seq[i]
+        
+            outfile.write(f'{chrom}\t{cur_pos}\t{cur_nuc}\t{alt_nuc}\t{trinuc}\t{alt_trinuc}\t{enst}\t{strand}\t{i}\t{coding_nuc}\t{codon_pos}\t{codon}\t{alt_codon}\t{AA_pos}\t{AA}\t{alt_AA}\n')
         
 
