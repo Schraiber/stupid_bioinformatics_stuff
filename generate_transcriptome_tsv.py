@@ -21,7 +21,7 @@ def parse_bed_file(bed_file):
             exons[enst_id].append((chrom, int(start), int(end), strand))
     return exons
 
-parser = argparse.ArgumentParser(description="Extract coding sequences from a reference genome using a BED file.")
+parser = argparse.ArgumentParser(description="Extract coding sequences from a reference genome using a BED file. NOTE THAT POSITIONS ARE 0 BASED")
 parser.add_argument("reference_genome", help="Path to the reference genome in FASTA format.")
 parser.add_argument("bed_file", help="Path to the BED file containing coding exon coordinates.")
 parser.add_argument("output_tsv", help="Path to the output tsv file containing coding sequences.")
@@ -84,7 +84,10 @@ for enst in exons:
             codon = transcript_seq[codon_start:codon_end]
             AA_pos = math.floor(num_codon)-math.floor(i/3)
 
-        AA = codon.translate()
+        try:
+            AA = codon.translate()
+        except BiopythonWarning:
+            AA = None
             
         trinuc = before_seq[i] + cur_nuc + after_seq[i]
 
@@ -94,9 +97,12 @@ for enst in exons:
             else:
                 alt_coding_nuc = alt_nuc
             alt_codon = codon[:codon_pos] + Seq(alt_coding_nuc) + codon[(codon_pos+1):4]
-            alt_AA = alt_codon.translate()
+            try:
+                alt_AA = alt_codon.translate()
+            except BiopythonWarning:
+                AA = None
             alt_trinuc = before_seq[i] + alt_nuc + after_seq[i]
         
             outfile.write(f'{chrom}\t{cur_pos}\t{cur_nuc}\t{alt_nuc}\t{trinuc}\t{alt_trinuc}\t{enst}\t{strand}\t{i}\t{coding_nuc}\t{codon_pos}\t{codon}\t{alt_codon}\t{AA_pos}\t{AA}\t{alt_AA}\n')
-        
 
+#NOTE THAT OUTPUT POSITIONS ARE ZERO BASED!!!
