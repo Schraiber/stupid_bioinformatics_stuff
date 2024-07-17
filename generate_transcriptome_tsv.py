@@ -50,9 +50,9 @@ for enst in exons:
     for exon in exons[enst]:
         chrom, start, end, strand = exon
 
-        seq += fasta[chrom].seq[start:end]
-        before_seq += fasta[chrom].seq[(start-1):(end-1)]
-        after_seq += fasta[chrom].seq[(start+1):(end+1)]
+        seq += fasta[chrom].seq[start:end].upper()
+        before_seq += fasta[chrom].seq[(start-1):(end-1)].upper()
+        after_seq += fasta[chrom].seq[(start+1):(end+1)].upper()
 
         pos.extend(list(range(start,end)))
     
